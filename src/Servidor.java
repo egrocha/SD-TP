@@ -12,6 +12,7 @@ public class Servidor {
     Servidor(String address, int port){
         this.address = address;
         this.port = port;
+        this.contas = new HashMap<>();
     }
 
     public void start() throws IOException {
@@ -20,7 +21,7 @@ public class Servidor {
 
         while(true){
             Socket socket = serverSocket.accept();
-            Worker worker = new Worker(socket);
+            Worker worker = new Worker(socket, contas);
             Thread thread = new Thread(worker);
             thread.start();
         }

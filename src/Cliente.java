@@ -23,6 +23,10 @@ public class Cliente {
 
         System.out.println(inServer.readLine());
 
+        ReaderCliente readerCliente = new ReaderCliente(inServer);
+        Thread thread = new Thread(readerCliente);
+        thread.start();
+
         String line = "";
         while(!line.equals("exit")){
             line = in.readLine();
