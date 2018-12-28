@@ -3,7 +3,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -58,14 +57,18 @@ public class Worker implements Runnable{
                     out.println("Indique o seu email e password (Formato: email password)");
                     out.flush();
                     String[] dados = in.readLine().split(" ");
+                    this.lock.lock();
                     if(contas.containsKey(dados[0])){
                         if(dados[1].equals(contas.get(dados[0]).getPassword())){
+                            this.lock.unlock();
                             out.println("Login efetuado");
                             out.flush();
                             return true;
                         }
+                        else this.lock.unlock();
                     }
                     else{
+                        this.lock.unlock();
                         out.println("Dados inválidos");
                         out.flush();
                     }
@@ -76,13 +79,14 @@ public class Worker implements Runnable{
                     out.println("Indique o seu email e password (Formato: email password)");
                     out.flush();
                     String[] dados = in.readLine().split(" ");
+                    this.lock.lock();
                     if (contas.containsKey(dados[0])) {
+                        this.lock.unlock();
                         out.println("ERRO: Email já está registado");
                         out.flush();
                     }
                     else{
                         Conta conta = new Conta(dados[0], dados[1]);
-                        this.lock.lock();
                         contas.put(dados[0], conta);
                         this.lock.unlock();
                         out.println("Registo efetuado");

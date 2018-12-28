@@ -8,6 +8,7 @@ public class Servidor {
     private String address;
     private int port;
     private HashMap<String, Conta> contas;
+    private HashMap<String, CloudServer> servidores;
 
     Servidor(String address, int port){
         this.address = address;
