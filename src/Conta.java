@@ -7,6 +7,7 @@ public class Conta {
     Conta(String email, String password){
         this.email = email;
         this.password = password;
+        this.divida = 0;
     }
 
     public String getEmail() {

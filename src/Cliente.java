@@ -28,6 +28,8 @@ public class Cliente {
         thread.start();
 
         String line = "";
+
+        //preciso mudar isto para o cliente fechar o reader e fazer exit direito
         while(!line.equals("exit")){
             line = in.readLine();
             out.println(line);

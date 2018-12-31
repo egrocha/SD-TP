@@ -14,19 +14,27 @@ public class Servidor {
         this.address = address;
         this.port = port;
         this.contas = new HashMap<>();
+
+        dadosTeste();
     }
 
     public void start() throws IOException {
 
+        System.out.println("Servidor iniciado");
         ServerSocket serverSocket = new ServerSocket(port);
 
         while(true){
             Socket socket = serverSocket.accept();
-            Worker worker = new Worker(socket, contas);
+            Worker worker = new Worker(socket, contas, servidores);
             Thread thread = new Thread(worker);
             thread.start();
         }
 
+    }
+
+    public void dadosTeste(){
+        Conta c = new Conta("teste","teste");
+        this.contas.put("teste",c);
     }
 
 }

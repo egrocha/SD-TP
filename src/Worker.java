@@ -12,11 +12,13 @@ public class Worker implements Runnable{
     private BufferedReader in;
     private PrintWriter out;
     private HashMap<String, Conta> contas;
+    private HashMap<String, CloudServer> servidores;
     private ReentrantLock lock;
 
-    Worker(Socket socket, HashMap<String, Conta> contas){
+    Worker(Socket socket, HashMap<String, Conta> contas, HashMap<String, CloudServer> servidores){
         this.socket = socket;
         this.contas = contas;
+        this.servidores = servidores;
         this.lock = new ReentrantLock();
     }
 
@@ -33,33 +35,51 @@ public class Worker implements Runnable{
             boolean login = login();
             if(!login) return;
 
-            System.out.println("fora");
-
-            while(!line.equals("exit")){
+            while(true){
+                writeMenu();
                 line = in.readLine();
+                if(line.equals("1")){
+                    out.println("Não implementado");
+                    out.flush();
+                }
+                if(line.equals("2")){
+                    out.println("Não implementado");
+                    out.flush();
+                }
+                if(line.equals("3")){
+                    out.println("Não implementado");
+                    out.flush();
+                }
+                if(line.equals("4")){
+                    break;
+                }
                 System.out.println(line);
-                out.println("ok");
-                out.flush();
             }
+
+            out.println("exit");
+            out.flush();
+            socket.shutdownOutput();
+            socket.shutdownInput();
+            socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private boolean login() throws IOException {
-
         while(true){
             out.println("Login ou signup? (\"exit\" para sair)");
             out.flush();
             String line = in.readLine();
             if(line.toLowerCase().equals("login")){
                 while(true) {
-                    out.println("Indique o seu email e password (Formato: email password)");
+                    out.println("Indique as suas credênciais\nEmail:\nPassword:");
                     out.flush();
-                    String[] dados = in.readLine().split(" ");
+                    String email = in.readLine();
+                    String password = in.readLine();
                     this.lock.lock();
-                    if(contas.containsKey(dados[0])){
-                        if(dados[1].equals(contas.get(dados[0]).getPassword())){
+                    if(contas.containsKey(email)){
+                        if(password.equals(contas.get(email).getPassword())){
                             this.lock.unlock();
                             out.println("Login efetuado");
                             out.flush();
@@ -76,18 +96,19 @@ public class Worker implements Runnable{
             }
             else if(line.toLowerCase().equals("signup")){
                 while(true) {
-                    out.println("Indique o seu email e password (Formato: email password)");
+                    out.println("Indique as suas credênciais desejadas\nEmail:\nPassword:");
                     out.flush();
-                    String[] dados = in.readLine().split(" ");
+                    String email = in.readLine();
+                    String password = in.readLine();
                     this.lock.lock();
-                    if (contas.containsKey(dados[0])) {
+                    if (contas.containsKey(email)) {
                         this.lock.unlock();
                         out.println("ERRO: Email já está registado");
                         out.flush();
                     }
                     else{
-                        Conta conta = new Conta(dados[0], dados[1]);
-                        contas.put(dados[0], conta);
+                        Conta conta = new Conta(email, password);
+                        contas.put(email, conta);
                         this.lock.unlock();
                         out.println("Registo efetuado");
                         out.flush();
@@ -97,6 +118,13 @@ public class Worker implements Runnable{
             }
             else if(line.toLowerCase().equals("exit")) return false;
         }
+    }
+
+    private void writeMenu(){
+        out.println("Escolha uma opção:\n1 - Reservar servidor a pedido\n" +
+                "2 - Reservar uma instância a leilão\n3 - Consultar dívida\n"+
+                "4 - Sair");
+        out.flush();
     }
 
 }
