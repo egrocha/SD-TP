@@ -11,9 +11,13 @@ public class ReaderCliente implements Runnable{
 
     public void run() {
         try{
+            String line = "";
             while(true){
-                System.out.println(in.readLine());
+                line = in.readLine();
+                if(line != null) System.out.println(line);
+                else break;
             }
+            System.out.println("Carregue no ENTER para sair");
         } catch(IOException e){
             e.printStackTrace();
         }
