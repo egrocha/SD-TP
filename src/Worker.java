@@ -3,8 +3,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Worker implements Runnable{
@@ -14,14 +15,17 @@ public class Worker implements Runnable{
     private PrintWriter out;
     private String cliente;
     private HashMap<String, Conta> contas;
-    private HashMap<String, HashMap<String, CloudServer>> servidores;
+    private HashMap<String, HashMap<String, CloudServer>> servers;
+    private final ArrayList<String> lostAuctions;
     private ReentrantLock lock;
 
     Worker(Socket socket, HashMap<String, Conta> contas,
-           HashMap<String, HashMap<String, CloudServer>> servidores){
+           HashMap<String, HashMap<String, CloudServer>> servers,
+           ArrayList<String> lostAuctions){
         this.socket = socket;
         this.contas = contas;
-        this.servidores = servidores;
+        this.servers = servers;
+        this.lostAuctions = lostAuctions;
         this.lock = new ReentrantLock();
     }
 
@@ -34,14 +38,14 @@ public class Worker implements Runnable{
             out.println("Ligação estabelecida");
             out.flush();
 
-            String line = "";
-
             boolean login = login();
+            checkLostAuctions();
+            createListeners();
             if(login) {
                 menu:
                 while (true) {
                     writeMenu();
-                    line = in.readLine();
+                    String line = in.readLine();
                     switch (line) {
                         case "1":
                             showServers();
@@ -152,7 +156,7 @@ public class Worker implements Runnable{
     }
 
     private void showServers(){
-        for(HashMap<String, CloudServer> hm : servidores.values()){
+        for(HashMap<String, CloudServer> hm : servers.values()){
             for(CloudServer cs : hm.values()){
                 switch (cs.getState()) {
                     case (0):
@@ -207,11 +211,14 @@ public class Worker implements Runnable{
 
     private void showAvailableServers(String category, int flag) throws IOException {
         int count = 0;
-        for(CloudServer cs : this.servidores.get(category).values()){
+        ArrayList<String> aux = new ArrayList<>();
+        for(CloudServer cs : this.servers.get(category).values()){
             if(cs.getState() == 0){
-                out.println(cs.getId());
-                out.flush();
                 count++;
+                String id = cs.getId();
+                aux.add(id);
+                out.println(id);
+                out.flush();
             }
         }
         if(count != 0) {
@@ -219,9 +226,9 @@ public class Worker implements Runnable{
             out.flush();
             while (true) {
                 String line = in.readLine();
-                if (servidores.get(category).containsKey(line)) {
+                if (aux.contains(line)) {
                     if(flag == 0) {
-                        reserveServer(category, line);
+                        reserveServer(category, line, flag);
                     }
                     else{
                         startAuction(category, line);
@@ -262,17 +269,60 @@ public class Worker implements Runnable{
         }
     }
 
-    private void showAuctionedServers(String category){
-        System.out.println("Não implementado");
+    private void showAuctionedServers(String category) throws IOException {
+        int count = 0;
+        ArrayList<String> aux = new ArrayList<>();
+        for(CloudServer cs : this.servers.get(category).values()){
+            if(cs.getState() == 2){
+                count++;
+                String id = cs.getId();
+                aux.add(id);
+                out.println(id);
+                out.flush();
+            }
+        }
+        if(count == 0){
+            out.println("Não existem servidores reservados em leilão nesta categoria");
+            out.flush();
+        }
+        else{
+            out.println("Qual servidor pretende reservar?");
+            out.flush();
+            while(true){
+                String line = in.readLine();
+                if(aux.contains(line)){
+                    reserveServer(category, line, 2);
+                    out.println("Servidor reservado com sucesso");
+                    out.flush();
+                    break;
+                }
+                else{
+                    out.println("Servidor inválido");
+                }
+            }
+        }
     }
 
     private void startAuction(String category, String id){
+        CloudServer cs = servers.get(category).get(id);
 
     }
 
-    private void reserveServer(String category, String serverID){
-        this.servidores.get(category).get(serverID).setState(3);
-        this.servidores.get(category).get(serverID).setStart(new Date());
+    private void reserveServer(String category, String serverID, int flag){
+        if(flag == 2){
+            lostAuctions.add(category+"-"+serverID);
+            synchronized (lostAuctions){
+                lostAuctions.notifyAll();
+            }
+            CloudServer cs = servers.get(category).get(serverID);
+            String lastAuction = cs.getLastAuction();
+            Date start = cs.getStart();
+            Date end = new Date();
+            double rate = cs.getRate();
+            contas.get(lastAuction).addDivida(calcDebt(start, end, rate));
+        }
+        this.servers.get(category).get(serverID).setState(3);
+        this.servers.get(category).get(serverID).setStart(new Date());
         this.contas.get(cliente).getReservados().put(category+"-"+serverID, serverID);
     }
 
@@ -314,7 +364,7 @@ public class Worker implements Runnable{
     private void freeServer(String id){
         String[] parts = id.split("-");
         String name = this.contas.get(cliente).getReservados().get(id);
-        CloudServer aux = this.servidores.get(parts[0]).get(name);
+        CloudServer aux = this.servers.get(parts[0]).get(name);
         aux.setState(0);
         Date start = aux.getStart();
         double rate = aux.getRate();
@@ -326,6 +376,34 @@ public class Worker implements Runnable{
     private double calcDebt(Date start, Date end, double rate){
         long time = end.getTime() - start.getTime();
         return time/1000/60/60 * rate;
+    }
+
+    private void createListeners(){
+        new Thread(() -> {
+            while (true) {
+                synchronized (lostAuctions) {
+                    try {
+                        lostAuctions.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    checkLostAuctions();
+                }
+            }
+        }).start();
+    }
+
+    private void checkLostAuctions(){
+        HashMap<String, String> reservados = contas.get(cliente).getReservados();
+        for (String s : reservados.keySet()) {
+            if (lostAuctions.contains(s)) {
+                lostAuctions.remove(s);
+                reservados.remove(s);
+                out.println("A sua reserva com ID " + s + " foi cancelada");
+                out.flush();
+                break;
+            }
+        }
     }
 
 }

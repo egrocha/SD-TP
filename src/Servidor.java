@@ -5,17 +5,22 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 public class Servidor {
 
     private int port;
     private HashMap<String, Conta> contas;
     private HashMap<String, HashMap<String, CloudServer>> servidores;
+    private ArrayList<String> lostAuctions;
+    private volatile Object auctionLock;
 
     Servidor(int port){
         this.port = port;
         this.contas = new HashMap<>();
         this.servidores = new HashMap<>();
+        this.lostAuctions = new ArrayList<>();
+        this.auctionLock = new Object();
 
         contasTeste();
         servidoresTeste();
@@ -27,7 +32,7 @@ public class Servidor {
 
         while(true){
             Socket socket = serverSocket.accept();
-            Worker worker = new Worker(socket, contas, servidores);
+            Worker worker = new Worker(socket, contas, servidores, lostAuctions);
             Thread thread = new Thread(worker);
             thread.start();
         }
@@ -81,6 +86,7 @@ public class Servidor {
         cs2.setStart(d2);
         cs2.setState(2);
         cs2.setAuctionRate(1);
+        cs2.setLastAuction("teste2");
         this.contas.get("teste2").getReservados().put("large-s2.large", "s2.large");
     }
 

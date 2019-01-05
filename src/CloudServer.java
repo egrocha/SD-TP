@@ -6,6 +6,7 @@ public class CloudServer {
     private int state;
     private double rate;
     private double auctionRate;
+    private String lastAuction;
     private Date start;
 
     CloudServer(String id, double rate){
@@ -31,6 +32,10 @@ public class CloudServer {
         return auctionRate;
     }
 
+    public String getLastAuction() {
+        return lastAuction;
+    }
+
     public Date getStart() {
         return start;
     }
@@ -49,6 +54,10 @@ public class CloudServer {
 
     public void setAuctionRate(double auctionRate) {
         this.auctionRate = auctionRate;
+    }
+
+    public void setLastAuction(String lastAuction){
+        this.lastAuction = lastAuction;
     }
 
     public void setStart(Date start) {
