@@ -4,6 +4,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Date;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Worker implements Runnable{
@@ -46,12 +47,10 @@ public class Worker implements Runnable{
                             showServers();
                             break;
                         case "2":
-                            out.println("Não implementado");
-                            out.flush();
+                            menuReserveServer(0);
                             break;
                         case "3":
-                            out.println("Não implementado");
-                            out.flush();
+                            menuReserveServer(1);
                             break;
                         case "4":
                             out.println("Dívida: " + contas.get(this.cliente).getDivida());
@@ -61,7 +60,7 @@ public class Worker implements Runnable{
                             checkServers();
                             break;
                         case "6":
-                            freeServers();
+                            freeServerStart();
                             break;
                         case "7":
                             break menu;
@@ -181,6 +180,102 @@ public class Worker implements Runnable{
         }
     }
 
+    private void menuReserveServer(int flag) throws IOException {
+        out.println("Qual categoria de servidor quer reservar?\nCategorias: " +
+                "large, medium, micro");
+        out.flush();
+        while(true) {
+            String line = in.readLine();
+            if (line.toLowerCase().equals("large")) {
+                showAvailableServers("large", flag);
+                break;
+            }
+            if(line.toLowerCase().equals("medium")){
+                showAvailableServers("medium", flag);
+                break;
+            }
+            if(line.toLowerCase().equals("micro")){
+                showAvailableServers("micro", flag);
+                break;
+            }
+            else {
+                out.println("Opção inválida");
+                out.flush();
+            }
+        }
+    }
+
+    private void showAvailableServers(String category, int flag) throws IOException {
+        int count = 0;
+        for(CloudServer cs : this.servidores.get(category).values()){
+            if(cs.getState() == 0){
+                out.println(cs.getId());
+                out.flush();
+                count++;
+            }
+        }
+        if(count != 0) {
+            out.println("Qual servidor pretende reservar?");
+            out.flush();
+            while (true) {
+                String line = in.readLine();
+                if (servidores.get(category).containsKey(line)) {
+                    if(flag == 0) {
+                        reserveServer(category, line);
+                    }
+                    else{
+                        startAuction(category, line);
+                    }
+                    out.println("Servidor reservado com sucesso");
+                    out.flush();
+                    break;
+                }
+                else{
+                    out.println("Servidor inválido");
+                    out.flush();
+                }
+            }
+        }
+        else if(flag == 0){
+            out.println("Não existem servidores disponíveis nessa categoria.\n" +
+                    "Quer tentar libertar servidores em reserva por leilão? (sim/nao)");
+            out.flush();
+            loop:
+            while (true) {
+                String line = in.readLine();
+                switch (line.toLowerCase()) {
+                    case "sim":
+                        showAuctionedServers(category);
+                        break loop;
+                    case "nao":
+                        break loop;
+                    default:
+                        out.println("Opção inválida");
+                        out.flush();
+                        break;
+                }
+            }
+        }
+        else{
+            out.println("Não existem servidores disponíveis nesta categoria");
+            out.flush();
+        }
+    }
+
+    private void showAuctionedServers(String category){
+        System.out.println("Não implementado");
+    }
+
+    private void startAuction(String category, String id){
+
+    }
+
+    private void reserveServer(String category, String serverID){
+        this.servidores.get(category).get(serverID).setState(3);
+        this.servidores.get(category).get(serverID).setStart(new Date());
+        this.contas.get(cliente).getReservados().put(category+"-"+serverID, serverID);
+    }
+
     private int checkServers(){
         if(contas.get(cliente).getReservados().size() == 0){
             out.println("Não tem servidores reservados");
@@ -198,23 +293,39 @@ public class Worker implements Runnable{
         }
     }
 
-    private void freeServers() throws IOException {
+    private void freeServerStart() throws IOException {
         int check = checkServers();
         if(check == 0) return;
         out.println("Indique o ID do servidor que pretende libertar");
         out.flush();
-        String id = in.readLine();
-        lock.lock();
-        CloudServer cs = contas.get(cliente).getReservados().remove(id);
-        if(cs == null){
-            out.println("ID inválido");
+        String line = in.readLine();
+        if(contas.get(cliente).getReservados().containsKey(line)){
+            freeServer(line);
+            contas.get(cliente).getReservados().remove(line);
+            out.println("Servidor libertado com successo");
             out.flush();
         }
         else{
-            out.println("Servidor libertado com sucesso");
+            out.println("Servidor inválido");
             out.flush();
         }
-        lock.unlock();
+    }
+
+    private void freeServer(String id){
+        String[] parts = id.split("-");
+        String name = this.contas.get(cliente).getReservados().get(id);
+        CloudServer aux = this.servidores.get(parts[0]).get(name);
+        aux.setState(0);
+        Date start = aux.getStart();
+        double rate = aux.getRate();
+        Date end = new Date();
+        double debt = calcDebt(start, end, rate);
+        this.contas.get(cliente).addDivida(debt);
+    }
+
+    private double calcDebt(Date start, Date end, double rate){
+        long time = end.getTime() - start.getTime();
+        return time/1000/60/60 * rate;
     }
 
 }

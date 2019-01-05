@@ -1,19 +1,18 @@
+import java.util.Calendar;
+import java.util.Date;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 
 public class Servidor {
 
-    private String address;
     private int port;
     private HashMap<String, Conta> contas;
     private HashMap<String, HashMap<String, CloudServer>> servidores;
 
-    Servidor(String address, int port){
-        this.address = address;
+    Servidor(int port){
         this.port = port;
         this.contas = new HashMap<>();
         this.servidores = new HashMap<>();
@@ -38,7 +37,7 @@ public class Servidor {
         Conta c = new Conta("teste","teste");
         Conta c2 = new Conta("teste2","teste2");
         Conta c3 = new Conta("teste3","teste3");
-        Conta c4 = new Conta("admin","admin");
+        Conta c4 = new Conta("teste4","teste4");
         this.contas.put(c.getEmail(), c);
         this.contas.put(c2.getEmail(), c2);
         this.contas.put(c3.getEmail(), c3);
@@ -64,16 +63,25 @@ public class Servidor {
         this.servidores.put("large", large);
         this.servidores.put("medium", medium);
         this.servidores.put("micro", micro);
-        this.contas.get("teste").getReservados().put("s1.large", cs);
+        cs.setState(3);
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY,7);
+        cal.set(Calendar.MINUTE,30);
+        cal.set(Calendar.SECOND,0);
+        cal.set(Calendar.MILLISECOND,0);
+        Date d = cal.getTime();
+        cs.setStart(d);
+        this.contas.get("teste").getReservados().put("large-s1.large", "s1.large");
+        Calendar cal2 = Calendar.getInstance();
+        cal2.set(Calendar.HOUR_OF_DAY,9);
+        cal2.set(Calendar.MINUTE,30);
+        cal2.set(Calendar.SECOND,0);
+        cal2.set(Calendar.MILLISECOND,0);
+        Date d2 = cal.getTime();
+        cs2.setStart(d2);
+        cs2.setState(2);
+        cs2.setAuctionRate(1);
+        this.contas.get("teste2").getReservados().put("large-s2.large", "s2.large");
     }
 
-
-    public void teste() throws InterruptedException {
-        Date now = new Date();
-        long start = now.getTime();
-        TimeUnit.SECONDS.sleep(5);
-        Date after = new Date();
-        long finish = after.getTime();
-        System.out.println(finish - start);
-    }
 }

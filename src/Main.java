@@ -5,7 +5,6 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-
         Scanner scanner = new Scanner(System.in);
         System.out.println("Escolha uma opção");
         System.out.println("1 - Cliente");
@@ -16,7 +15,7 @@ public class Main {
             cliente.start();
         }
         else if(op == 2){
-            Servidor servidor = new Servidor("127.0.0.1", 12345);
+            Servidor servidor = new Servidor(12345);
             servidor.start();
         }
     }

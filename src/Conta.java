@@ -5,7 +5,7 @@ public class Conta {
     private String email;
     private String password;
     private double divida;
-    private HashMap<String, CloudServer> reservados;
+    private HashMap<String, String> reservados;
 
     Conta(String email, String password){
         this.email = email;
@@ -22,7 +22,7 @@ public class Conta {
         return password;
     }
 
-    public HashMap<String, CloudServer> getReservados(){
+    public HashMap<String, String> getReservados(){
         return this.reservados;
     }
 

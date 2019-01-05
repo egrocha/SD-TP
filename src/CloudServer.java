@@ -1,16 +1,18 @@
-import java.sql.Date;
+import java.util.Date;
 
 public class CloudServer {
 
     private String id;
     private int state;
     private double rate;
+    private double auctionRate;
     private Date start;
 
     CloudServer(String id, double rate){
         this.id = id;
         this.state = 0;
         this.rate = rate;
+        this.auctionRate = 0;
     }
 
     public String getId(){
@@ -23,6 +25,10 @@ public class CloudServer {
 
     public double getRate() {
         return rate;
+    }
+
+    public double getAuctionRate() {
+        return auctionRate;
     }
 
     public Date getStart() {
@@ -41,7 +47,12 @@ public class CloudServer {
         this.rate = rate;
     }
 
+    public void setAuctionRate(double auctionRate) {
+        this.auctionRate = auctionRate;
+    }
+
     public void setStart(Date start) {
         this.start = start;
     }
+
 }
