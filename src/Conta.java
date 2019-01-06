@@ -7,6 +7,13 @@ public class Conta {
     private double divida;
     private HashMap<String, String> reservados;
 
+    /*
+     * Construtor para Conta:
+     * email - email usado para login do utilizador
+     * password - password usada para autenticação do utilizador
+     * divida - dívida acumulada pelo utilizador
+     * reservados - regista quais as reservas mantidas pelo utilizador
+     */
     Conta(String email, String password){
         this.email = email;
         this.password = password;
@@ -14,23 +21,50 @@ public class Conta {
         this.reservados = new HashMap<>();
     }
 
-    public String getEmail() {
+    // Getter para a variável email
+    public synchronized String getEmail() {
         return email;
     }
 
-    public String getPassword() {
+    // Getter para a variável password
+    public synchronized String getPassword() {
         return password;
     }
 
-    public HashMap<String, String> getReservados(){
-        return this.reservados;
-    }
-
-    public double getDivida(){
+    // Getter para a variável divida
+    public synchronized double getDivida(){
         return divida;
     }
 
-    public void addDivida(double valor){
+    // Getter para a variável reservados
+    public synchronized HashMap<String, String> getReservados(){
+        return this.reservados;
+    }
+
+    // Setter para a variável email
+    public synchronized void setEmail(String email) {
+        this.email = email;
+    }
+
+    // Setter para a variável password
+    public synchronized void setPassword(String password) {
+        this.password = password;
+    }
+
+    // Setter para a variável divida
+    public synchronized void setDivida(double divida) {
+        this.divida = divida;
+    }
+
+    // Setter para a variável reservados
+    public synchronized void setReservados(HashMap<String, String> reservados) {
+        this.reservados = reservados;
+    }
+
+    /*
+     * Função usada para aumentar a dívida do utilizador
+     */
+    public synchronized void addDivida(double valor){
         this.divida += valor;
     }
 

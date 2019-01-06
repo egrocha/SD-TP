@@ -11,33 +11,50 @@ public class Servidor {
 
     private int port;
     private HashMap<String, Conta> contas;
-    private HashMap<String, HashMap<String, CloudServer>> servidores;
+    private HashMap<String, HashMap<String, CloudServer>> servers;
     private ArrayList<String> lostAuctions;
-    private volatile Object auctionLock;
 
+    /*
+     * Construtor para Servidor:
+     * port - endereço IP usado para iniciar a ServerSocket
+     * contas - estrutura HashMap que contem todas as contas
+     * de clientes
+     * servers - HashMap que contem todos os servidores Cloud
+     * geridos pelo sistema
+     * lostAuctions - lista que mantém registo de reservas
+     * por leilão que são canceladas pelo servidor
+     * Inicia também as funções usadas para gerar dados de teste
+     */
     Servidor(int port){
         this.port = port;
         this.contas = new HashMap<>();
-        this.servidores = new HashMap<>();
+        this.servers = new HashMap<>();
         this.lostAuctions = new ArrayList<>();
-        this.auctionLock = new Object();
 
         contasTeste();
         servidoresTeste();
     }
 
+    /*
+     * Inicia o servidor e cria o ServerSocket, que aceita conexões
+     * de clientes, criando uma Socket e uma Thread com um novo Worker,
+     * que irá tratar a Socket que foi criada
+     */
     public void start() throws IOException {
         System.out.println("Servidor iniciado");
         ServerSocket serverSocket = new ServerSocket(port);
 
         while(true){
             Socket socket = serverSocket.accept();
-            Worker worker = new Worker(socket, contas, servidores, lostAuctions);
+            Worker worker = new Worker(socket, contas, servers, lostAuctions);
             Thread thread = new Thread(worker);
             thread.start();
         }
     }
 
+    /*
+     * Cria as contas usadas para testar o programa
+     */
     public void contasTeste(){
         Conta c = new Conta("teste","teste");
         Conta c2 = new Conta("teste2","teste2");
@@ -49,6 +66,11 @@ public class Servidor {
         this.contas.put(c4.getEmail(), c4);
     }
 
+    /*
+     * Cria os servidores Cloud usados para teste e relaciona
+     * alguns deles a clientes para testar funções de reserva e
+     * libertação de servidores
+     */
     public void servidoresTeste(){
         HashMap<String, CloudServer> large = new HashMap<>();
         HashMap<String, CloudServer> medium = new HashMap<>();
@@ -65,9 +87,9 @@ public class Servidor {
         medium.put(cs4.getId(), cs4);
         micro.put(cs5.getId(), cs5);
         micro.put(cs6.getId(), cs6);
-        this.servidores.put("large", large);
-        this.servidores.put("medium", medium);
-        this.servidores.put("micro", micro);
+        this.servers.put("large", large);
+        this.servers.put("medium", medium);
+        this.servers.put("micro", micro);
         cs.setState(3);
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY,7);

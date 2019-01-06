@@ -9,11 +9,23 @@ public class Cliente {
     private String address;
     private int port;
 
+    /*
+     * Construtor para Cliente:
+     * address - endereço IP definido para o servidor
+     * port - porta usada para aceder ao servidor
+     */
     Cliente(String address, int port){
         this.address = address;
         this.port = port;
     }
 
+    /*
+     * Função que inicia o processo de cliente e liga-o
+     * ao servidor. Lê linhas do input e envia-as ao
+     * Worker que lhe foi atribuido. Inicia também uma thread
+     * com uma instância da classe ReaderCliente, que lê as
+     * linhas enviadas pelo servidor.
+     */
     public void start() throws IOException {
         Socket socket = new Socket(address, port);
 

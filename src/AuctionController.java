@@ -4,10 +4,21 @@ public class AuctionController implements Runnable{
 
     private CloudServer cs;
 
+    /*
+     * Construtor para AuctionController:
+     * cs - CloudServer em que para qual o leilão está a
+     * decorrer
+     */
     public AuctionController(CloudServer cs) {
         this.cs = cs;
     }
 
+    /*
+     * Função que inicia o AuctionController, espera algum tempo
+     * e depois verifica qual o valor máximo colocado no mapa de ofertas
+     * e qual o utilizador que o colocou. No fim acorda todos os Workers
+     * que participaram no leilão e se encontram à espera do fim dele
+     */
     public void run(){
         HashMap<String, Double> bids = cs.getBids();
         try {
@@ -28,6 +39,7 @@ public class AuctionController implements Runnable{
             }
             cs.setLastAuction(winner);
             cs.setAuctionRate(x);
+            bids.clear();
             bids.notifyAll();
         }
     }

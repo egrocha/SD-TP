@@ -3,6 +3,10 @@ import java.util.Scanner;
 
 public class Main {
 
+    /*
+     * Função principal do programa; dá ao utilizador
+     * a escolha de começar como o servidor ou como um cliente
+     */
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Escolha uma opção");
