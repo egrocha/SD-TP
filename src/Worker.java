@@ -213,7 +213,7 @@ public class Worker implements Runnable{
         int count = 0;
         ArrayList<String> aux = new ArrayList<>();
         for(CloudServer cs : this.servers.get(category).values()){
-            if(cs.getState() == 0){
+            if(cs.getState() == 0 || cs.getState() == flag){
                 count++;
                 String id = cs.getId();
                 aux.add(id);
@@ -228,13 +228,16 @@ public class Worker implements Runnable{
                 String line = in.readLine();
                 if (aux.contains(line)) {
                     if(flag == 0) {
-                        reserveServer(category, line, flag);
+                        reserveServer(category, line, 0);
+                        out.println("Servidor reservado com sucesso");
+                        out.flush();
                     }
                     else{
-                        startAuction(category, line);
+                        out.println("Quanto deseja pagar por hora?");
+                        out.flush();
+                        double rate = Double.parseDouble(in.readLine());
+                        enterAuction(category, line, rate);
                     }
-                    out.println("Servidor reservado com sucesso");
-                    out.flush();
                     break;
                 }
                 else{
@@ -291,7 +294,7 @@ public class Worker implements Runnable{
             while(true){
                 String line = in.readLine();
                 if(aux.contains(line)){
-                    reserveServer(category, line, 2);
+                    reserveServerReplace(category, line);
                     out.println("Servidor reservado com sucesso");
                     out.flush();
                     break;
@@ -303,27 +306,66 @@ public class Worker implements Runnable{
         }
     }
 
-    private void startAuction(String category, String id){
+    private void enterAuction(String category, String id, double rate)  {
         CloudServer cs = servers.get(category).get(id);
-
+        HashMap<String, Double> bids = cs.getBids();
+        if(bids.isEmpty()){
+            cs.setState(1);
+            out.println("A iniciar leilão...");
+            out.flush();
+            bids.put(cliente, rate);
+            AuctionController auctionController = new AuctionController(cs);
+            Thread thread = new Thread(auctionController);
+            thread.start();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        else{
+            out.println("A entrar no leilão...");
+            out.flush();
+            bids.put(cliente, rate);
+            synchronized (bids){
+                try {
+                    bids.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        if(cs.getLastAuction().equals(cliente)){
+            out.println("Ganhou o leilão");
+            out.flush();
+            reserveServer(category, cs.getId(), 1);
+        }
+        else{
+            out.println("Perdeu o leilão");
+            out.flush();
+        }
     }
 
-    private void reserveServer(String category, String serverID, int flag){
-        if(flag == 2){
-            lostAuctions.add(category+"-"+serverID);
-            synchronized (lostAuctions){
-                lostAuctions.notifyAll();
-            }
-            CloudServer cs = servers.get(category).get(serverID);
-            String lastAuction = cs.getLastAuction();
-            Date start = cs.getStart();
-            Date end = new Date();
-            double rate = cs.getRate();
-            contas.get(lastAuction).addDivida(calcDebt(start, end, rate));
+    private void reserveServer(String category, String serverID, int flag) {
+        CloudServer cs = this.servers.get(category).get(serverID);
+        if(flag == 0) cs.setState(3);
+        if(flag == 1) cs.setState(2);
+        cs.setStart(new Date());
+        this.contas.get(cliente).getReservados().put(category + "-" + serverID, serverID);
+    }
+
+    private void reserveServerReplace(String category, String serverID) {
+        lostAuctions.add(category + "-" + serverID);
+        synchronized (lostAuctions) {
+            lostAuctions.notifyAll();
         }
-        this.servers.get(category).get(serverID).setState(3);
-        this.servers.get(category).get(serverID).setStart(new Date());
-        this.contas.get(cliente).getReservados().put(category+"-"+serverID, serverID);
+        CloudServer cs = servers.get(category).get(serverID);
+        String lastAuction = cs.getLastAuction();
+        Date start = cs.getStart();
+        Date end = new Date();
+        double rate = cs.getRate();
+        contas.get(lastAuction).addDivida(calcDebt(start, end, rate));
+        reserveServer(category, serverID, 0);
     }
 
     private int checkServers(){

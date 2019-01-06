@@ -3,7 +3,7 @@ import java.io.IOException;
 
 public class ReaderCliente implements Runnable{
 
-    BufferedReader in;
+    private BufferedReader in;
 
     public ReaderCliente(BufferedReader in) {
         this.in = in;
@@ -11,7 +11,7 @@ public class ReaderCliente implements Runnable{
 
     public void run() {
         try{
-            String line = "";
+            String line;
             while(true){
                 line = in.readLine();
                 if(line != null) System.out.println(line);

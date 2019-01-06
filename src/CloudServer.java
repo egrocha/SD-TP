@@ -1,4 +1,5 @@
 import java.util.Date;
+import java.util.HashMap;
 
 public class CloudServer {
 
@@ -8,12 +9,14 @@ public class CloudServer {
     private double auctionRate;
     private String lastAuction;
     private Date start;
+    private HashMap<String, Double> bids;
 
     CloudServer(String id, double rate){
         this.id = id;
         this.state = 0;
         this.rate = rate;
         this.auctionRate = 0;
+        this.bids = new HashMap<>();
     }
 
     public String getId(){
@@ -40,6 +43,10 @@ public class CloudServer {
         return start;
     }
 
+    public HashMap<String, Double> getBids() {
+        return bids;
+    }
+
     public void setId(String id) {
         this.id = id;
     }
@@ -62,6 +69,10 @@ public class CloudServer {
 
     public void setStart(Date start) {
         this.start = start;
+    }
+
+    public void setBids(HashMap<String, Double> bids) {
+        this.bids = bids;
     }
 
 }

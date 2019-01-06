@@ -27,7 +27,7 @@ public class Cliente {
         Thread thread = new Thread(readerCliente);
         thread.start();
 
-        String line = "";
+        String line;
         do {
             try {
                 line = in.readLine();
